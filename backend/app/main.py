@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 
-app = FastAPI(title="CityBrain AI", version="0.1.0")
+from backend.app.core.config import settings
+from backend.app.routers import routers
 
+app = FastAPI(title=settings.app_name, version="0.2.2")
 
-@app.get("/health")
-def health() -> dict:
-    return {"status": "ok"}
+for r in routers:
+    app.include_router(r, prefix=settings.api_v1_prefix)

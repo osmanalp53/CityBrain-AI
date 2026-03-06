@@ -32,12 +32,7 @@ class ParkRecommendation(BaseModel):
     reason: str
 
 
-class AnalyzeResponse(BaseModel):
-    city: str
-    radius_m: int
-    h3_res: int
-    cell_count: int
-
+class SummaryMetrics(BaseModel):
     avg_d_park: float | int | None = None
     avg_d_metro: float | int | None = None
     avg_d_hospital: float | int | None = None
@@ -49,5 +44,23 @@ class AnalyzeResponse(BaseModel):
 
     bad_access_cell_count: int
 
+
+class AnalyzeResponse(BaseModel):
+    city: str
+    radius_m: int
+    h3_res: int
+    cell_count: int
+
+    summary: SummaryMetrics
+
     worst_cells: list[WorstCell]
     park_recommendations: list[ParkRecommendation]
+
+
+class RecommendationsResponse(BaseModel):
+    recommendation_type: str
+    city: str
+    radius_m: int
+    h3_res: int
+    top_k: int
+    items: list[ParkRecommendation]

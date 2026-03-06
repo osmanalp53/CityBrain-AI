@@ -45,5 +45,15 @@ def fetch_parks() -> gpd.GeoDataFrame:
 
     # Save snapshot
     gdf.to_file(PARKS_SNAPSHOT, driver="GeoJSON")
+    
 
     return gdf
+METRO_SNAPSHOT = Path("data") / "metro.geojson"
+
+
+def fetch_metro() -> gpd.GeoDataFrame:
+    if not METRO_SNAPSHOT.exists():
+        raise FileNotFoundError(
+            "data/metro.geojson not found. Place metro station data under data/."
+        )
+    return gpd.read_file(METRO_SNAPSHOT)

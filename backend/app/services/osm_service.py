@@ -57,3 +57,24 @@ def fetch_metro() -> gpd.GeoDataFrame:
             "data/metro.geojson not found. Place metro station data under data/."
         )
     return gpd.read_file(METRO_SNAPSHOT)
+def fetch_hospitals() -> gpd.GeoDataFrame:
+    """
+    Local hospital datasetini okur.
+    data/hospital.geojson dosyasından yükler.
+    """
+
+    path = Path("data/hospital.geojson")
+
+    if not path.exists():
+        raise FileNotFoundError(f"Hospital data file not found: {path}")
+
+    gdf = gpd.read_file(path)
+
+    if gdf.empty:
+        raise ValueError("Hospital GeoJSON is empty.")
+
+    # CRS kontrolü
+    if gdf.crs is None:
+        gdf = gdf.set_crs(epsg=4326)
+
+    return gdf

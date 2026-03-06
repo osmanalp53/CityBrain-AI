@@ -1,18 +1,20 @@
 from fastapi import APIRouter, Query
-from backend.app.services.osm_service import fetch_parks
-from backend.app.services.grid_service import add_nearest_park_distance
+
 from backend.app.core.config import settings
-from backend.app.services.grid_service import add_park_score
-from backend.app.services.grid_service import summarize_park_metrics
-from backend.app.services.grid_service import get_worst_cells
-from backend.app.services.grid_service import recommend_new_parks
-from backend.app.services.osm_service import fetch_metro
-from backend.app.services.grid_service import add_nearest_metro_distance
-from backend.app.services.grid_service import add_metro_score
-from backend.app.services.grid_service import add_urban_score
+from backend.app.services.osm_service import fetch_parks, fetch_metro, fetch_hospitals
 from backend.app.services.grid_service import (
     bbox_to_h3_cells,
     h3_cells_to_feature_collection,
+    add_nearest_park_distance,
+    add_park_score,
+    add_nearest_metro_distance,
+    add_metro_score,
+    add_nearest_hospital_distance,
+    add_hospital_score,
+    add_urban_score,
+    summarize_park_metrics,
+    get_worst_cells,
+    recommend_new_parks,
 )
 
 router = APIRouter(tags=["grid"])
@@ -32,18 +34,24 @@ def get_grid(
     fc = h3_cells_to_feature_collection(cells)
 
     parks = fetch_parks()
-
     fc = add_nearest_park_distance(fc, parks)
     fc = add_park_score(fc)
+
     metro = fetch_metro()
     fc = add_nearest_metro_distance(fc, metro)
     fc = add_metro_score(fc)
+
+    hospitals = fetch_hospitals()
+    fc = add_nearest_hospital_distance(fc, hospitals)
+    fc = add_hospital_score(fc)
+
     fc = add_urban_score(fc)
 
     if not full:
         summary = summarize_park_metrics(fc)
-        worst_cells = get_worst_cells(fc)
-        park_recommendations = recommend_new_parks(fc,top_k=top_k)
+        worst_cells = get_worst_cells(fc, top_k=top_k)
+        park_recommendations = recommend_new_parks(fc, top_k=top_k)
+
         return {
             "city": settings.default_city,
             "bbox": settings.ankara_bbox,

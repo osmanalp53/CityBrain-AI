@@ -1,8 +1,6 @@
 from fastapi import APIRouter
-
-from backend.app.schemas.analyze import AnalyzeRequest
+from backend.app.schemas.analyze import AnalyzeRequest, AnalyzeResponse
 from backend.app.core.config import settings
-
 from backend.app.services.osm_service import fetch_parks, fetch_metro, fetch_hospitals
 from backend.app.services.grid_service import (
     bbox_to_h3_cells,
@@ -22,8 +20,8 @@ from backend.app.services.grid_service import (
 router = APIRouter(tags=["analyze"])
 
 
-@router.post("/analyze")
-def analyze_city(req: AnalyzeRequest):
+@router.post("/analyze",response_model=AnalyzeResponse)
+def analyze_city(req: AnalyzeRequest, top_k: int = 10):
 
     cells = bbox_to_h3_cells(settings.ankara_bbox, req.h3_res)
 
@@ -44,8 +42,8 @@ def analyze_city(req: AnalyzeRequest):
     fc = add_urban_score(fc)
 
     summary = summarize_park_metrics(fc)
-    worst_cells = get_worst_cells(fc)
-    recommendations = recommend_new_parks(fc)
+    worst_cells = get_worst_cells(fc, top_k=top_k)
+    recommendations = recommend_new_parks(fc, top_k=top_k)
 
     return {
         "city": req.city,

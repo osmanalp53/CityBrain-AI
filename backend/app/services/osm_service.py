@@ -9,6 +9,8 @@ from backend.app.core.config import settings
 
 DATA_DIR = Path("data")
 PARKS_SNAPSHOT = DATA_DIR / "parks.geojson"
+METRO_SNAPSHOT = DATA_DIR / "metro.geojson"
+HOSPITAL_SNAPSHOT = DATA_DIR / "hospital.geojson"
 
 
 def fetch_parks() -> gpd.GeoDataFrame:
@@ -22,33 +24,32 @@ def fetch_parks() -> gpd.GeoDataFrame:
     """
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    # 1) Offline-first
     if PARKS_SNAPSHOT.exists():
         gdf = gpd.read_file(PARKS_SNAPSHOT)
+        if gdf.empty:
+            raise ValueError("Park GeoJSON is empty.")
+        if gdf.crs is None:
+            gdf = gdf.set_crs(epsg=4326)
         return gdf
 
-    # 2) Online fetch (best effort)
     ox.settings.timeout = 180
     ox.settings.use_cache = True
     ox.settings.overpass_rate_limit = True
 
     tags = {"leisure": "park"}
 
-    # Use bbox for now but with smaller area if needed
     min_lon, min_lat, max_lon, max_lat = settings.ankara_bbox
-
-    # OSMnx bbox signature differs by version; this works in recent versions:
     gdf = ox.features_from_bbox((max_lat, min_lat, max_lon, min_lon), tags=tags)
-
-    # Keep only geometries
     gdf = gdf.reset_index()
 
-    # Save snapshot
     gdf.to_file(PARKS_SNAPSHOT, driver="GeoJSON")
-    
+
+    if gdf.empty:
+        raise ValueError("Fetched park GeoDataFrame is empty.")
+    if gdf.crs is None:
+        gdf = gdf.set_crs(epsg=4326)
 
     return gdf
-METRO_SNAPSHOT = Path("data") / "metro.geojson"
 
 
 def fetch_metro() -> gpd.GeoDataFrame:
@@ -56,24 +57,29 @@ def fetch_metro() -> gpd.GeoDataFrame:
         raise FileNotFoundError(
             "data/metro.geojson not found. Place metro station data under data/."
         )
-    return gpd.read_file(METRO_SNAPSHOT)
+
+    gdf = gpd.read_file(METRO_SNAPSHOT)
+
+    if gdf.empty:
+        raise ValueError("Metro GeoJSON is empty.")
+
+    if gdf.crs is None:
+        gdf = gdf.set_crs(epsg=4326)
+
+    return gdf
+
+
 def fetch_hospitals() -> gpd.GeoDataFrame:
-    """
-    Local hospital datasetini okur.
-    data/hospital.geojson dosyasından yükler.
-    """
+    if not HOSPITAL_SNAPSHOT.exists():
+        raise FileNotFoundError(
+            "data/hospital.geojson not found. Place hospital data under data/."
+        )
 
-    path = Path("data/hospital.geojson")
-
-    if not path.exists():
-        raise FileNotFoundError(f"Hospital data file not found: {path}")
-
-    gdf = gpd.read_file(path)
+    gdf = gpd.read_file(HOSPITAL_SNAPSHOT)
 
     if gdf.empty:
         raise ValueError("Hospital GeoJSON is empty.")
 
-    # CRS kontrolü
     if gdf.crs is None:
         gdf = gdf.set_crs(epsg=4326)
 

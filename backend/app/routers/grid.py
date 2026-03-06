@@ -24,7 +24,7 @@ router = APIRouter(tags=["grid"])
 def get_grid(
     full: bool = Query(False, description="If true, return full GeoJSON FeatureCollection"),
     limit: int = Query(0, ge=0, le=20000, description="If >0, limit number of cells returned"),
-    top_k: int = Query(3, ge=1, le=20, description="Number of park recommendations"),
+    top_k: int = Query(3, ge=1, le=20, description="Number of cells/recommendations returned"),
 ) -> dict:
     cells = bbox_to_h3_cells(settings.ankara_bbox, settings.default_h3_res)
 

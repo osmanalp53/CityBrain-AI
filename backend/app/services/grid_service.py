@@ -314,8 +314,14 @@ def recommend_new_parks(feature_collection, top_k=3):
 
     candidates = [
         f for f in features
-        if (f["properties"].get("park_score") or 0) == 0
+        if (f["properties"].get("score") or 0) <= 0.20
     ]
+
+    if not candidates:
+        candidates = sorted(
+            features,
+            key=lambda f: f["properties"].get("score", 1)
+        )[:top_k]
 
     ranked = sorted(
         candidates,
@@ -331,10 +337,11 @@ def recommend_new_parks(feature_collection, top_k=3):
         lat, lon = h3.cell_to_latlng(h3_id)
 
         reason = (
-            f"Low urban score area. "
-            f"Nearest park {props.get('d_park')} m, "
-            f"metro {props.get('d_metro')} m, "
-            f"hospital {props.get('d_hospital')} m."
+            f"This area has low urban health access "
+            f"(score={props.get('score')}). "
+            f"Nearest park is {props.get('d_park')} m, "
+            f"nearest metro is {props.get('d_metro')} m, "
+            f"nearest hospital is {props.get('d_hospital')} m."
         )
 
         recommendations.append(
